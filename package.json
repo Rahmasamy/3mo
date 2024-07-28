@@ -1,0 +1,16 @@
+{
+  "dependencies": {
+    "express": "^4.19.2",
+    "express-validator": "^7.1.0",
+    "morgan": "^1.10.0"
+  },
+  "name": "nodejsproject",
+  "version": "1.0.0",
+  "description": "this for initialization for node",
+  "main": "index.js",
+  "scripts": {
+    "run": "nodemon index.js"
+  },
+  "author": "rahma samy",
+  "license": "ISC"
+}
