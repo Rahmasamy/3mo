@@ -92,6 +92,11 @@
 // })
 const express = require('express');
 const morgan = require('morgan');
+const mongoose=require('mongoose');
+const url="mongodb+srv://rahmasamy949:0xF2tUzB5CIe1Xoh@mongodb-nodejs.tjctvx3.mongodb.net/crs";
+mongoose.connect(url).then(() => {
+    console.log("mongoose connect succesfuly");
+})
 
 const app = express();
 const port = 5001;
