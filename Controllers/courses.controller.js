@@ -1,75 +1,84 @@
 // let {Courses} =require('../courses');
 const Course = require('../models/course.model'); // Ensure correct path to your model
 const { validationResult } = require('express-validator');
-const getAllCourses = async (req, res) => {
+const HttpStatus=require('../utils/httpStatusText');
+const asyncWrapper=require('../middleWare/asyncWrapper');
+const AppError=require('../utils/appError');
+const getAllCourses = asyncWrapper(async (req, res) => {
+    const limit=req.query.limit || 10;
+    const page= req.query.page || 1;
+    const skip=(page-1)*limit;
     console.log("Fetching all courses");
-    try {
-      const courses = await Course.find(); 
-     
-      res.json(courses);
-    } catch (error) {
-      res.status(500).json({ message: error.message });
-    }
-  };
+
+      const courses = await Course.find({},{"__v":false}).limit(limit).skip(skip); 
+        res.json({status:HttpStatus.SUCESS,data:{courses}});
+  }
+  );
 
 
-const getSingleCourse = async(req, res) => {
+const getSingleCourse =asyncWrapper(async(req, res,next) => {
   
-    try{
+   
         const course=await Course.findById(req.params.id)
+        console.log(!course);
         if(!course){
-            return res.status(404).json({message:"no course with that id found  "})
+           const error = AppError.createError("course Not fOUND",404,HttpStatus.FAIL);
+           return next(error);
+   
         }
-        return  res.json(course)
-    }
-    catch(error) {
-        return res.status(400).json({message:"invalid object id"})
-    }
-  
+        return  res.json({status:HttpStatus.SUCESS,data:{course}})
+    
+    
  }
+)
 
- const CreateNewCourse = async (req, res) => {
-    try {
-        
+
+module.exports = { getSingleCourse };
+
+ const CreateNewCourse =asyncWrapper(async (req, res,next) => {
+   
         const reqBody = req.body;
         
         const validateErrors = validationResult(req.body); // Corrected typo here
 
         if (!validateErrors.isEmpty()) {
-            return res.status(400).json({ errors: validateErrors.array() }); // Changed msg to errors
+            const error = AppError.createError("course is empty",404,HttpStatus.FAIL);
+            return next(error)
+          
         }
 
         const newCourse = new Course(reqBody);
         await newCourse.save();
-        res.status(201).json(newCourse);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Server Error' });
-    }
-};
-const updateCourse = async (req, res) => {
-    try {
+        res.status(201).json({status:HttpStatus.SUCESS,data:{newCourse}});
+    
+});
+const updateCourse = asyncWrapper (async (req, res) => {
+  
         const courseUpdated = await Course.updateOne({ _id: req.params.id }, { $set: { ...req.body } });
 
         if (courseUpdated.matchedCount === 0) {
-            return res.status(404).json({ message: "No course with that ID found" });
+            
+            const error = AppError.createError("No course with that ID found",404,HttpStatus.FAIL);
+            return next(error)
         }
 
         if (courseUpdated.modifiedCount === 0) {
-            return res.status(400).json({ message: "No changes made to the course" });
+            const error = AppError.createError("No changes made to the course",400,HttpStatus.FAIL);
+            return next(error)
         }
 
-        res.status(200).json({ message: "Course updated successfully" });
-    } catch (err) {
-        return res.status(400).json({ message: `Not valid update ${err}` });
-    }
-};
+        res.status(200).json({status:HttpStatus.SUCESS,data: {coureupdata:courseUpdated}, message: "Course updated successfully" });
 
-const delteCourse = async(req,res)=> {
-    const resp=await Course.deleteOne({_id:req.params.id})
-    res.status(200).json({delete:"true",msg:resp})
+} );
+
+const delteCourse = asyncWrapper (async(req,res)=> {
+
+    await Course.deleteOne({_id:req.params.id})
+    res.status(200).json({status:HttpStatus.SUCESS,data:null})
+
+
 }
-
+)
 module.exports={
     getAllCourses,getSingleCourse,CreateNewCourse,updateCourse,delteCourse
 }
